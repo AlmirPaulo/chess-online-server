@@ -16,6 +16,19 @@ class Database:
     def remove(self, data):
         self.database.pop(data)
 
+
+class Network:
+    def __init__(self):
+        self.connect = simple_websocket.Server(request.environ) 
+
+    def recv(self):
+        return self.connect.receive()
+
+    def send(self, data):
+        return self.connect.send(data)
+
+
+
 players = Database()
 
 @app.route('/')
@@ -24,36 +37,40 @@ def ping():
 
 @app.route('/game', websocket=True)
 def game_loop():
-    socket = simple_websocket.Server(request.environ)
+    global socket
+    socket = Network()
 
     #Start Game
-    player = socket.receive(300)
+    player = socket.recv()
     player2 = player.partition('/')
     for p in players.database:
-        player1 = p
-        try:
-            if player1[2] == player2[2]:
-                if player1[0] == 'white' and player2[0] == 'white':
-                    player2_color = 'black'
-                    player1_color = 'white'
-                    print(player2_color, player1_color)
-                    # game_mechanics()
-                elif player1[0] == 'black' and player2[0] == 'black':
-                    player2_color = 'white'
-                    player1_color = 'black'
-                    print(player2_color, player1_color)
-                    # game_mechanics()
-                else:
-                    player1_color = player1[0]
-                    player2_color = player2[0]
-                    print(player2_color, player1_color)
-                    # game_mechanics()
-            else:
-                socket.send('Wait for a second Player...')
-
-
-        except simple_websocket.ConnectionClosed:
+        if p == '....':
             pass
+        else:
+            player1 = p
+            try:
+                if player1[2] == player2[2]:
+                    if player1[0] == 'white' and player2[0] == 'white':
+                        player2_color = 'black'
+                        player1_color = 'white'
+                        print(player2_color, player1_color)
+                        game_mechanics(player1_color, player2_color)
+                    elif player1[0] == 'black' and player2[0] == 'black':
+                        player2_color = 'white'
+                        player1_color = 'black'
+                        print(player2_color, player1_color)
+                        game_mechanics(player1_color, player2_color)
+                    else:
+                        player1_color = player1[0]
+                        player2_color = player2[0]
+                        print(player2_color, player1_color)
+                        game_mechanics(player1_color, player2_color)
+                else:
+                    socket.send('Wait for a second Player...')
+
+
+            except simple_websocket.ConnectionClosed:
+                pass
     
     if any(i[2] == player[2] for i in players.database):
         socket.send('We already have this room. Please, choose other name for your room.')
@@ -65,7 +82,9 @@ def game_loop():
 
 def game_mechanics(player1_color, player2_color):
     while True:
-        move = socket.receive(600)
+        global socket
+        move = socket.recv()
+        resp = f'{player1_color}: {move}'
         #check if it is legal move
             #move
             #report ilegal move
