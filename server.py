@@ -80,11 +80,11 @@ def game_loop():
     return ''
 
 
-def game_mechanics(player1_color, player2_color):
+def game_mechanics(color1, color2):
     while True:
         global socket
         move = socket.recv()
-        resp = f'{player1_color}: {move}'
+        resp = f'{color1}: {move}'
         #check if it is legal move
             #move
             #report ilegal move
